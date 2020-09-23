@@ -1,47 +1,48 @@
-##
-## This file is part of the libsigrokdecode project.
-##
-## Copyright (C) 2020 Thomas Hoffmann <th.hoffmann@mailbox.org>
-##
-## This program is free software; you can redistribute it and/or modify
-## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 2 of the License, or
-## (at your option) any later version.
-##
-## This program is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with this program; if not, see <http://www.gnu.org/licenses/>.
-##
+#
+# This file is part of the libsigrokdecode project.
+#
+# Copyright (C) 2020 Thomas Hoffmann <th.hoffmann@mailbox.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+#
 
 import re
 import sigrokdecode as srd
 
-#FIXME: reduce annotation types
+# FIXME: reduce annotation types
 anb_DA, anb_RES, anb_SL, anb_CB, anb_DC, anb_PG, \
-anb_CO, anb_mux, anb_par, anb_LAST = range(10)
+    anb_CO, anb_mux, anb_par, anb_LAST = range(10)
 
 bits = (
     'Display Addressing', 'Reserved', 'Start Line', 'Continuation bit',
     'Data / Command bit', 'Page', 'Column', 'mux', 'Parameter bit', 'Last Bit'
 )
 
-ann_LC, ann_HC, ann_DM, ann_SCA, ann_SPA, ann_SFB, ann_RHS, ann_LHS, ann_VRHS, ann_VLHS, \
-ann_SS, ann_AS, ann_DSL, ann_SCC, ann_SCPU, ann_MC0TS0, ann_MCFFTS0, ann_SVSA, \
-ann_DOR, ann_DOI, ann_ND, ann_ID, ann_SMR, ann_DOFF, ann_DON, ann_PSA, \
-ann_CSU, ann_CSD, ann_SVO, ann_DCR, ann_ZI, ann_SPP, ann_SCPI, \
-ann_SVD, ann_NOP, ann_GR, ann_DA, ann_CB, ann_LAST = range(anb_LAST+1, anb_LAST+40)
+(ann_LC, ann_HC, ann_DM, ann_SCA, ann_SPA, ann_SFB, ann_RHS, ann_LHS, ann_VRHS,
+    ann_VLHS, ann_SS, ann_AS, ann_DSL, ann_SCC, ann_SCPU, ann_MC0TS0,
+    ann_MCFFTS0, ann_SVSA, ann_DOR, ann_DOI, ann_ND, ann_ID, ann_SMR,
+    ann_DOFF, ann_DON, ann_PSA, ann_CSU, ann_CSD, ann_SVO, ann_DCR, ann_ZI,
+    ann_SPP, ann_SCPI, ann_SVD, ann_NOP, ann_GR, ann_DA, ann_CB,
+    ann_LAST) = range(anb_LAST+1, anb_LAST+40)
 
 cmds2 = {
-#           ann name              annID       cmd txt
+    #       ann name              annID       cmd txt
     0x00: ('LowerColStart',       ann_LC,     ['Set Lower Column Start Address', 'Set L Col Start', 'LC']),
     0x10: ('HigherColStart',      ann_HC,     ['Set Higher Column Start Address', 'Set H Col Start', 'HC']),
     0x20: ('DisplayMode',         ann_DM,     ['Set Display Mode', 'Set Dsp Md', 'DM']),
     0x21: ('SetColAddress',       ann_SCA,    ['Set Column Address', 'Set Col Adr', 'CA']),
-    0x22: ('SetPageAddress',      ann_SPA,    ['Set Page Address', 'Set Pg Adr', 'PA']), 
+    0x22: ('SetPageAddress',      ann_SPA,    ['Set Page Address', 'Set Pg Adr', 'PA']),
     0x23: ('SetFadeoutBlinking',  ann_SFB,    ['Set Fade-out and Blinking', 'Set FO Blnk', 'FB']), 
     0x26: ('RightHorScroll',      ann_RHS,    ['Right horizontal scroll', 'Right hor scr', 'RHS']), 
     0x27: ('LeftHorScroll',       ann_LHS,    ['Left horizontal scroll', 'Left hor scr', 'LHS']), 
@@ -145,8 +146,9 @@ class Decoder(srd.Decoder):
     def handle_par_0x00(self, param): # low col start addr
         #bit output:
         for i in range(4, 8): self.put0(i)
-        self.putd(3, 0, [cmds2[self.prevreg][1], ['Lwr col start addr= %d' % param & 0xf,
-            'lo col %d' % param & 0xf, 'LCS']])
+        self.putd(3, 0, [cmds2[self.prevreg][1], 
+            ['Lwr col start addr= %d' % param & 0xf,
+             'lo col %d' % param & 0xf, 'LCS']])
         #cmd output: none
         #block output
         self.blockstring += '= %d' % param & 0xf
@@ -155,8 +157,9 @@ class Decoder(srd.Decoder):
         #bit output:
         for i in range(5, 8): self.put0(i)
         self.put1(4)
-        self.putd(3, 0, [cmds2[self.prevreg][1], ['Hghr col start addr= %d' % param & 0xf,
-            'hi col %d' % param & 0xf, 'HCS']])
+        self.putd(3, 0, [cmds2[self.prevreg][1], 
+            ['Hghr col start addr= %d' % param & 0xf,
+             'hi col %d' % param & 0xf, 'HCS']])
         #cmd output: none
         #block output
         self.blockstring += '= %d' % param & 0xf       
@@ -169,8 +172,9 @@ class Decoder(srd.Decoder):
             self.putr(i)
         self.putd(1, 0, [anb_DA, ['mode: %s' % am2[param & 3], 'DM']])
         #cmd output:
-        self.putd(7, 0, [cmds2[self.prevreg][1], ['Display mode: %s' % am[param & 3],
-        'mode: %s' % am2[param & 3], 'DM']])
+        self.putd(7, 0, [cmds2[self.prevreg][1], 
+            ['Display mode: %s' % am[param & 3],
+             'mode: %s' % am2[param & 3], 'DM']])
         #block output:
         self.blockstring += ': %s' % am[param & 3]
         self.substate = 'COMMAND'
@@ -183,8 +187,9 @@ class Decoder(srd.Decoder):
             self.putr(7)
             self.putd(6, 0, [anb_CO, ['col %d' % sc, 'CO']])
             #cmd output:
-            self.putd(7, 0, [cmds2[self.prevreg][1], ['Start column: %d%s' % (sc,res), 
-                'St Col: %d' % sc, 'SC']])
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['Start column: %d%s' % (sc,res), 
+                 'St Col: %d' % sc, 'SC']])
             #block output:
             self.blockstring += ' from %d%s ' % (sc, res)
             self.substate = 'PARAMETER2'
@@ -210,7 +215,8 @@ class Decoder(srd.Decoder):
                 self.putr(i)
             self.putd(2, 0, [anb_PG, ['page %d' % sp, 'PG']])
             #cmd output:
-            self.putd(7, 0, [cmds2[self.prevreg][1], ['Start Page: %d%s' % (sp,res), 'St Pg: %d' % sp, 'SP']])
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['Start Page: %d%s' % (sp,res), 'St Pg: %d' % sp, 'SP']])
             #block output:
             self.blockstring += ' from %d%s ' % (sp, res)
             self.substate = 'PARAMETER2'
@@ -222,7 +228,8 @@ class Decoder(srd.Decoder):
                 self.putr(i)
             self.putd(2, 0, [anb_PG, ['page %d' % ep, 'PG']])    
             #cmd output:
-            self.putd(7, 0, [cmds2[self.prevreg][1], ['End Page: %d%s' % (ep,res), 'End Pg: %d' % ep, 'EP']])
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['End Page: %d%s' % (ep,res), 'End Pg: %d' % ep, 'EP']])
             #block output
             self.blockstring += 'to %d%s' % (ep,res)
             self.substate = 'COMMAND'
@@ -288,8 +295,9 @@ class Decoder(srd.Decoder):
         #bit output:
         self.put0(7)
         self.put1(6)
-        self.putd(5, 0, [cmds2[self.prevreg][1], ['Start line= %d' % (param & 0x3f),
-            'st l %d' % (param & 0x3f), 'StL']])
+        self.putd(5, 0, [cmds2[self.prevreg][1], 
+            ['Start line= %d' % (param & 0x3f),
+             'st l %d' % (param & 0x3f), 'StL']])
         #cmd output: none
         #block output
         self.blockstring += '= %d' % (param & 0x3f)
@@ -332,8 +340,9 @@ class Decoder(srd.Decoder):
             self.putr(6)
             self.putd(5, 0, [anb_par, ['tfr: %d' % tfr, 'tfr']])
             #cmd output:
-            self.putd(7, 0, [cmds2[self.prevreg][1], ['Top fixed rows: %d%s' % (tfr,res), 
-                'Tp fx rws: %d' % tfr, 'TFR']])
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['Top fixed rows: %d%s' % (tfr,res), 
+                 'Tp fx rws: %d' % tfr, 'TFR']])
             #block output:
             self.blockstring += ', top fixed rows: %d%s, ' % (tfr, res)
             self.substate = 'PARAMETER2'
@@ -359,11 +368,12 @@ class Decoder(srd.Decoder):
         #cmd output:
         if mux < 16:
             self.put(self.sscmd, self.es, self.out_ann,
-                 [anb_warn, ['invalid multiplex ratio < 16 (%d)' % mux]])
+                 [anw_warn, ['invalid multiplex ratio < 16 (%d)' % mux]])
             self.blockstring=''     
         else:     
             res = ' (reset)' if mux == 64 else ''
-            self.putd(7, 0, [cmds2[self.prevreg][1], ['%d %s' % (mux, res), '%d' % mux]])
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['%d %s' % (mux, res), '%d' % mux]])
             #block output
             self.blockstring += ' to %d%s' % (mux, res)
         self.substate = 'COMMAND'
@@ -372,8 +382,9 @@ class Decoder(srd.Decoder):
         #bit output:
         for i in (4, 5, 7): self.put1(i)
         for i in (3, 6): self.put0(i)
-        self.putd(2, 0, [cmds2[self.prevreg][1], ['Page start addr= %d' % param & 0x7,
-            'pg st %d' % param & 0x7, 'PSA']])
+        self.putd(2, 0, [cmds2[self.prevreg][1], 
+            ['Page start addr= %d' % param & 0x7,
+             'pg st %d' % param & 0x7, 'PSA']])
         #cmd output: none
         #block output
         self.blockstring += '= %d' % param & 0x7
@@ -398,8 +409,9 @@ class Decoder(srd.Decoder):
         self.putd(3, 0, [anb_par, ['dr: %d' % dr, 'dr']])
         #cmd output
         res = '(reset)' if of == 8 else ''
-        self.putd(7, 0, [cmds2[self.prevreg][1], ['Freq=%d, div ratio=%d %s' % (of,dr,res),
-            'f, r: %d, %d' % (of,dr), 'FR']])
+        self.putd(7, 0, [cmds2[self.prevreg][1], 
+            ['Freq=%d, div ratio=%d %s' % (of,dr,res),
+             'f, r: %d, %d' % (of,dr), 'FR']])
         #block output
         self.blockstring += ': fOSC=%d, divide ratio=%d %s' % (of,dr,res)
         self.substate = 'COMMAND'
@@ -415,7 +427,8 @@ class Decoder(srd.Decoder):
         for i in range(1,8): self.put0(i)
         self.putd(0, 0, [anb_par, ['zo: %s' % z, 'zo']])            
         #cmd output
-        self.putd(7, 0, [cmds2[self.prevreg][1], ['Zoom-in: %s' % zo, 'Zoom: %d' % z, 'ZI']])
+        self.putd(7, 0, [cmds2[self.prevreg][1], 
+            ['Zoom-in: %s' % zo, 'Zoom: %d' % z, 'ZI']])
         #block output
         self.blockstring += ': %s' % zo
         self.substate = 'COMMAND'
@@ -429,13 +442,15 @@ class Decoder(srd.Decoder):
         #cmd output:
         if p1 == 0 or p2 == 0: 
             self.put(self.ss_block, self.es, self.out_ann,
-                 [anw_warn, ['invalid precharge period = 0 (p1: %d, p2: %d)' % (p1, p2)]])
+                 [anw_warn, 
+                 ['invalid precharge period = 0 (p1: %d, p2: %d)' % (p1, p2)]])
             self.blockstring = ''     
         else:
             res1 = ' (reset)' if p1 == 2 else ''
             res2 = ' (reset)' if p2 == 2 else ''
-            self.putd(7, 0, [cmds2[self.prevreg][1], ['P1=%d%s, P2=%d%s' % (p1, res1, p2, res2),
-                'p1, p2: %d, %d' % (p1,p2), 'PC']])
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['P1=%d%s, P2=%d%s' % (p1, res1, p2, res2),
+                 'p1, p2: %d, %d' % (p1,p2), 'PC']])
             #block output
             self.blockstring += ': P1=%d%s, P2=%d%s' % (p1, res1, p2, res2)
         self.substate = 'COMMAND'
@@ -449,8 +464,9 @@ class Decoder(srd.Decoder):
         self.putd(5, 5, [anb_par, ['LRM', 'L']])
         self.putd(4, 4, [anb_par, ['SEQ', 'S']])
         #cmd output
-        self.putd(7, 0, [cmds2[self.prevreg][1], ['COM pins: %s, %s L/R remap' % (seq, lrm),
-            '%s %s' % (s, l), 'CP']])
+        self.putd(7, 0, [cmds2[self.prevreg][1], 
+            ['COM pins: %s, %s L/R remap' % (seq, lrm),
+             '%s %s' % (s, l), 'CP']])
         #block output
         self.blockstring += ': %s, %s L/R remap' % (seq, lrm)
         self.substate = 'COMMAND'
@@ -500,7 +516,7 @@ class Decoder(srd.Decoder):
                     self.substate='PARAMETER'
                     #self.prevreg = b
                 if b in (0x0, 0x10, 0x40, 0xB0):
-                    #handlers for 0x0 - 0xF, 0x10 - 0x1F, 0x40 - 0x7F, 0xB0 - 0xB7
+                    #handlers for 0x0 - 0xF, 0x10-0x1F, 0x40-0x7F, 0xB0-0xB7
                     fn = getattr(self, 'handle_par_0x%02x' % b)
                     fn(b1)
             else:
@@ -512,7 +528,8 @@ class Decoder(srd.Decoder):
                     [anbl_block, [self.blockstring]])
 
     def handle_data(self, b):
-        self.putd(7, 0, [ann_GR, ['GDDRAM data: 0x%02X' % b, 'RAM: %02X' % b, 'RAM']])
+        self.putd(7, 0, [ann_GR, ['GDDRAM data: 0x%02X' % b, 
+                                  'RAM: %02X' % b, 'RAM']])
 
     def is_correct_chip(self, addr):
         if addr in (SSD1306_I2C_ADDRESS, SSD1306_I2C_ADDRESS_2) :
@@ -520,7 +537,8 @@ class Decoder(srd.Decoder):
               'Dev Addr: 0x%02X' % addr, 'Dev Addr', 'DA']])
             return True
         self.put(self.ss_block, self.es, self.out_ann,
-                 [anw_warn, ['Ignoring non-SSD1306 data (slave 0x%02X)' % addr]])
+                 [anw_warn, 
+                     ['Ignoring non-SSD1306 data (slave 0x%02X)' % addr]])
         return False
 
     def handle_controlbyte(self, b):
