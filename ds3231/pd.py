@@ -106,7 +106,6 @@ class Decoder(srd.Decoder):
     def reset(self):
         self.state = 'IDLE'
         self.bits = []
-#FIXME: tuple access        self.reg = self.options['regptr'])
         #date time
         self.hours = -1
         self.minutes = -1
@@ -141,10 +140,11 @@ class Decoder(srd.Decoder):
         #regs
         self.startreg = -1
         self.inblock = -1
-        #FIXME self.blockstring = ''
+        self.blockmode = ''        
         
     def start(self):
         self.out_ann = self.register(srd.OUTPUT_ANN)
+        self.reg = self.options['regptr']
 
     def putd(self, bit1, bit2, data):
         self.put(self.bits[bit1][1], self.bits[bit2][2], self.out_ann, data)
@@ -161,13 +161,14 @@ class Decoder(srd.Decoder):
         #block
         self.startreg = self.ss
         self.inblock = 0
+        self.blockmode = rw
         
     def handle_reg_0x01(self, b, rw): # Minutes (0-59)
         self.putd(7, 0, [Ann.REG_MINUTES, ['Minutes', 'Min', 'M']])
         self.putr(7)
         m = self.minutes = bcd2int(b & 0x7f)
         self.putd(6, 0, [Ann.BIT_MINUTES, ['Minute: %d' % m, 'Min: %d' % m, 'M: %d' % m, 'M']])
-        self.inblock = 1 if self.inblock == 0 else -1
+        self.inblock = 1 if self.inblock == 0 and self.blockmode == rw else -1
 
     def handle_reg_0x02(self, b, rw): # Hours (1-12+AM/PM or 0-23)
         self.putd(7, 0, [Ann.REG_HOURS, ['Hours', 'H']])
@@ -183,7 +184,7 @@ class Decoder(srd.Decoder):
             self.putd(6, 6, [Ann.BIT_AM_PM, ['24-hour mode', '24h mode', '24h']])
             h = self.hours = bcd2int(b & 0x3f)
             self.putd(5, 0, [Ann.BIT_HOURS, ['Hour: %d' % h, 'H: %d' % h, 'H']])
-        self.inblock = 2 if self.inblock == 1 else -1    
+        self.inblock = 2 if self.inblock == 1 and self.blockmode == rw else -1    
 
     def handle_reg_0x03(self, b, rw): # Day / day of week (1-7)
         self.putd(7, 0, [Ann.REG_DAY, ['Day of week', 'Day', 'D']])
@@ -192,7 +193,7 @@ class Decoder(srd.Decoder):
         self.days = bcd2int(b & 0x07)
         ws = days_of_week[self.days - 1]
         self.putd(2, 0, [Ann.BIT_DAY, ['Weekday: %s' % ws, 'WD: %s' % ws, 'WD', 'W']])
-        self.inblock = 3 if self.inblock == 2 else -1
+        self.inblock = 3 if self.inblock == 2 and self.blockmode == rw else -1
 
     def handle_reg_0x04(self, b, rw): # Date (1-31)
         self.putd(7, 0, [Ann.REG_DATE, ['Date', 'D']])
@@ -200,7 +201,7 @@ class Decoder(srd.Decoder):
             self.putr(i)
         d = self.date = bcd2int(b & 0x3f)
         self.putd(5, 0, [Ann.BIT_DATE, ['Date: %d' % d, 'D: %d' % d, 'D']])
-        self.inblock = 4 if self.inblock == 3 else -1
+        self.inblock = 4 if self.inblock == 3 and self.blockmode == rw else -1
 
     def handle_reg_0x05(self, b, rw): # Month (1-12)
         self.putd(7, 0, [Ann.REG_MONTH, ['Month', 'Mon', 'M']])
@@ -211,7 +212,7 @@ class Decoder(srd.Decoder):
             self.putr(i)
         m = self.months = bcd2int(b & 0x1f)
         self.putd(4, 0, [Ann.BIT_MONTH, ['Month: %d' % m, 'Mon: %d' % m, 'M: %d' % m, 'M']])
-        self.inblock = 5 if self.inblock == 4 else -1
+        self.inblock = 5 if self.inblock == 4 and self.blockmode == rw else -1
 
     def handle_reg_0x06(self, b, rw): # Year (0-99)
         self.putd(7, 0, [Ann.REG_YEAR, ['Year', 'Y']])
@@ -219,7 +220,7 @@ class Decoder(srd.Decoder):
         self.years += 2000
         self.putd(7, 0, [Ann.BIT_YEAR, ['Year: %d' % y, 'Y: %d' % y, 'Y']])
         #block
-        if self.inblock == 5:
+        if self.inblock == 5 and self.blockmode == rw :
             d = 'Date / time: %s, %02d.%02d.%4d %02d:%02d:%02d' % (
                 days_of_week[self.days - 1], self.date, self.months,
                 self.years, self.hours, self.minutes, self.seconds)
@@ -235,6 +236,7 @@ class Decoder(srd.Decoder):
         self.putd(6, 0, [Ann.BIT_SECONDS, ['Second: %d' % s, 'Sec: %d' % s, 'S: %d' % s, 'S']])
         self.startreg = self.ss
         self.inblock = 7
+        self.blockmode = rw 
 
     def handle_reg_0x08(self, b, rw): # Alarm1 Minutes (0-59)
         self.putd(7, 0, [Ann.REG_ALARM1_MINUTES, ['Alarm1 Minutes', 'Al1 Min', 'A1M']])
@@ -242,7 +244,7 @@ class Decoder(srd.Decoder):
         self.putd(7, 7, [Ann.BIT_A1M2, ['A1M2: %d' % self.a1m2, 'A1M2']])
         m = self.al1minutes = bcd2int(b & 0x7f)
         self.putd(6, 0, [Ann.BIT_MINUTES, ['Minute: %d' % m, 'Min: %d' % m, 'M: %d' % m, 'M']])
-        self.inblock = 8 if self.inblock == 7 else -1
+        self.inblock = 8 if self.inblock == 7 and self.blockmode == rw else -1
 
     def handle_reg_0x09(self, b, rw): # Alarm1 Hours (1-12+AM/PM or 0-23)
         self.putd(7, 0, [Ann.REG_ALARM1_HOURS, ['Alarm1 Hours', 'Al1 Hr', 'A1H']])
@@ -259,7 +261,7 @@ class Decoder(srd.Decoder):
             self.putd(6, 6, [Ann.BIT_12_24_HOURS, ['24-hour mode', '24h mode', '24h']])
             h = self.al1hours = bcd2int(b & 0x3f)
             self.putd(5, 0, [Ann.BIT_HOURS, ['Hour: %d' % h, 'H: %d' % h, 'H']])
-        self.inblock = 9 if self.inblock == 8 else -1
+        self.inblock = 9 if self.inblock == 8 and self.blockmode == rw else -1
 
     def handle_reg_0x0a(self, b, rw): # Alarm1 Date or Day / day of week (1-7)
         self.putd(7, 0, [Ann.REG_ALARM1_DAY_DATE, ['Alarm1 Date or Day of week', 'Al1 Day / DOW', 'A1DD']])
@@ -275,7 +277,7 @@ class Decoder(srd.Decoder):
             d = self.al1date = bcd2int(b & 0x3f)
             self.putd(5, 0, [Ann.BIT_DATE, ['Date / Day: %d' % d, 'D: %d' % d, 'D']])
         #block
-        if self.inblock == 9:
+        if self.inblock == 9 and self.blockmode == rw :
             if (self.a1m1, self.a1m2, self.a1m3, self.a1m4) == (1, 1, 1, 1):
                 d = 'every second'
             elif (self.a1m1, self.a1m2, self.a1m3, self.a1m4) == (0, 1, 1, 1):
@@ -306,6 +308,7 @@ class Decoder(srd.Decoder):
         self.putd(6, 0, [Ann.BIT_MINUTES, ['Minute: %d' % m, 'Min: %d' % m, 'M: %d' % m, 'M']])
         self.startreg = self.ss
         self.inblock = 0x0b
+        self.blockmode = rw 
 
     def handle_reg_0x0c(self, b, rw): # Alarm2 Hours (1-12+AM/PM or 0-23)
         self.putd(7, 0, [Ann.REG_ALARM2_HOURS, ['Alarm2 Hours', 'Al2 Hr', 'A2H']])
@@ -322,7 +325,7 @@ class Decoder(srd.Decoder):
             self.putd(6, 6, [Ann.BIT_12_24_HOURS, ['24-hour mode', '24h mode', '24h']])
             h = self.al2hours = bcd2int(b & 0x3f)
             self.putd(5, 0, [Ann.BIT_HOURS, ['Hour: %d' % h, 'H: %d' % h, 'H']])
-        self.inblock = 0x0c if self.inblock == 0x0b else -1
+        self.inblock = 0x0c if self.inblock == 0x0b and self.blockmode == rw else -1
 
     def handle_reg_0x0d(self, b, rw): # Alarm2 Date or Day / day of week (1-7)
         self.putd(7, 0, [Ann.REG_ALARM2_DAY_DATE, ['Alarm2 Date or Day of week', 'Al2 Day / DOW', 'A2DD']])
@@ -338,7 +341,7 @@ class Decoder(srd.Decoder):
             d = self.al2date = bcd2int(b & 0x3f)
             self.putd(5, 0, [Ann.BIT_DATE, ['Date / Date: %d' % d, 'D: %d' % d, 'D']])
         #block
-        if self.inblock == 0x0c:
+        if self.inblock == 0x0c and self.blockmode == rw :
             if (self.a2m2, self.a2m3, self.a2m4) == (1, 1, 1):
                 d = 'every minute'
             elif (self.a2m2, self.a2m3, self.a2m4) == (0, 1, 1):
