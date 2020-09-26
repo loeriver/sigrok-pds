@@ -26,10 +26,14 @@ import re
 import sigrokdecode as srd
 from common.srdhelper import bcd2int, SrdIntEnum
 
-days_of_week = (
-    'Sunday', 'Monday', 'Tuesday', 'Wednesday',
-    'Thursday', 'Friday', 'Saturday',
-)
+days_of_week = {'Monday': ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
+                'Sunday': ('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'),
+                'Saturday': ('Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')}
+
+#days_of_week = (
+#    'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+#    'Thursday', 'Friday', 'Saturday',
+#)
 
 #DS3231: registers 00h to 12h
 regs = (
@@ -85,10 +89,15 @@ class Decoder(srd.Decoder):
     tags = ['Clock/timing', 'IC']
     options = ( 
         {'id': 'subtype', 'desc': 'DS3231SN (TXCO) or DS3231M (MEMS)',
-         'default': 'SN', 'values': ('SN', 'M')}, 
+         'default': 'SN', 'values': ('SN', 'M')
+        }, 
         {'id': 'regptr', 'desc': 'value of register pointer at begin of capture',
          'default': 0,
-         'values': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18)}, 
+         'values': tuple(range(0x13))
+        }, 
+        {'id': 'fdw', 'desc': 'First day of week', 'default': 'Monday',
+         'values': ('Monday', 'Sunday', 'Saturday')
+        },
     )
     annotations =  regs_and_bits_and_blocks() + (
         ('warning', 'Warning'),
@@ -191,7 +200,8 @@ class Decoder(srd.Decoder):
         for i in (7, 6, 5, 4, 3):
             self.putr(i)
         self.days = bcd2int(b & 0x07)
-        ws = days_of_week[self.days - 1]
+        ws = days_of_week[self.options['fdw']][self.days - 1]
+#        ws = days_of_week[self.days - 1]
         self.putd(2, 0, [Ann.BIT_DAY, ['Weekday: %s' % ws, 'WD: %s' % ws, 'WD', 'W']])
         self.inblock = 3 if self.inblock == 2 and self.blockmode == rw else -1
 
@@ -222,10 +232,10 @@ class Decoder(srd.Decoder):
         #block
         if self.inblock == 5 and self.blockmode == rw :
             d = 'Date / time: %s, %02d.%02d.%4d %02d:%02d:%02d' % (
-                days_of_week[self.days - 1], self.date, self.months,
+                days_of_week[self.options['fdw']][self.days - 1], self.date, self.months,
                 self.years, self.hours, self.minutes, self.seconds)
             self.put(self.startreg, self.es, self.out_ann, 
-                [Ann.BLOCK_DATE_TIME, ['%s block data: %s' % (rw, d)]])
+                [Ann.BLOCK_DATE_TIME, ['%s %s' % (rw, d)]])
         self.inblock = -1
 
     def handle_reg_0x07(self, b, rw): # Alarm1 Seconds (0-59)
@@ -271,7 +281,7 @@ class Decoder(srd.Decoder):
         self.putd(6, 6, [Ann.BIT_DAY_DATE, ['DYDT: %d' % self.a1dydt, 'DYDT']])
         if self.a1dydt:        
             w = self.al1days = bcd2int(b & 0x07)
-            ws = days_of_week[self.days - 1]
+            ws = days_of_week[self.options['fdw']][self.days - 1]
             self.putd(2, 0, [Ann.BIT_DAY, ['Weekday: %s' % ws, 'WD: %d' % w, 'WD', 'W']])
         else:
             d = self.al1date = bcd2int(b & 0x3f)
@@ -281,14 +291,14 @@ class Decoder(srd.Decoder):
             if (self.a1m1, self.a1m2, self.a1m3, self.a1m4) == (1, 1, 1, 1):
                 d = 'every second'
             elif (self.a1m1, self.a1m2, self.a1m3, self.a1m4) == (0, 1, 1, 1):
-                d = 'second %02d' % self.al1seconds
+                d = 'every minute, second=%02d' % self.al1seconds
             elif (self.a1m1, self.a1m2, self.a1m3, self.a1m4) == (0, 0, 1, 1):
-                d = 'mm:ss %02d:%02d' % (self.al1minutes, self.al1seconds)
+                d = 'every hour, mm:ss=%02d:%02d' % (self.al1minutes, self.al1seconds)
             elif (self.a1m1, self.a1m2, self.a1m3, self.a1m4) == (0, 0, 0, 1):
-                d = 'hh:mm:ss %02d:%02d:%02d' % (self.al1hours, self.al1minutes, self.al1seconds)
+                d = 'daily, hh:mm:ss=%02d:%02d:%02d' % (self.al1hours, self.al1minutes, self.al1seconds)
             elif (self.a1m1, self.a1m2, self.a1m3, self.a1m4) == (0, 0, 0, 0):
                 if self.a1dydt == 1:
-                    daydate = days_of_week[self.al1days - 1], 
+                    daydate = ws
                 else:
                     daydate = '%d. of every month' % self.al1date
                 d = '%s, %02d:%02d:%02d' % (
@@ -297,7 +307,7 @@ class Decoder(srd.Decoder):
                 d = 'invalid setting'
             d = 'Alarm1: ' + d    
             self.put(self.startreg, self.es, self.out_ann, 
-                [Ann.BLOCK_ALARM1, ['%s block data: %s' % (rw, d)]])
+                [Ann.BLOCK_ALARM1, ['%s %s' % (rw, d)]])
         self.inblock = -1
 
     def handle_reg_0x0b(self, b, rw): # Alarm2 Minutes (0-59)
@@ -335,7 +345,7 @@ class Decoder(srd.Decoder):
         self.putd(6, 6, [Ann.BIT_DAY_DATE, ['DYDT: %d' % dydt, 'DYDT']])
         if dydt:        
             w = self.al2days = bcd2int(b & 0x07)
-            ws = days_of_week[self.days - 1]
+            ws = days_of_week[self.options['fdw']][self.al2days - 1]
             self.putd(2, 0, [Ann.BIT_DAY, ['Weekday: %s' % ws, 'WD: %d' % w, 'WD', 'W']])
         else:
             d = self.al2date = bcd2int(b & 0x3f)
@@ -345,21 +355,21 @@ class Decoder(srd.Decoder):
             if (self.a2m2, self.a2m3, self.a2m4) == (1, 1, 1):
                 d = 'every minute'
             elif (self.a2m2, self.a2m3, self.a2m4) == (0, 1, 1):
-                d = 'minute %02d' % self.al2minutes
+                d = 'every hour, minute=%02d' % self.al2minutes
             elif (self.a2m2, self.a2m3, self.a2m4) == (0, 0, 1):
-                d = 'hh:mm %02d:%02d' % (self.al2hours, self.al2minutes)
+                d = 'every day, hh:mm=%02d:%02d' % (self.al2hours, self.al2minutes)
             elif (self.a2m2, self.a2m3, self.a2m4) == (0, 0, 0):
                 if self.a2dydt == 1:
-                    daydate = days_of_week[self.al2days - 1], 
+                    daydate = ws     
                 else:
                     daydate = '%d. of month' % self.al2date
-                d = '%s, %02d:%02d' % (
+                d = 'every %s, hh:mm=%02d:%02d' % (
                     daydate, self.al2hours, self.al2minutes)
             else:
                 d = 'invalid setting'
             d = 'Alarm2: ' + d    
             self.put(self.startreg, self.es, self.out_ann, 
-                [Ann.BLOCK_ALARM2, ['%s block data: %s' % (rw, d)]])
+                [Ann.BLOCK_ALARM2, ['%s %s' % (rw, d)]])
         self.inblock = -1
 
     def handle_reg_0x0e(self, b, rw): # Control Register
@@ -447,6 +457,11 @@ class Decoder(srd.Decoder):
 
     def handle_reg(self, b, rw):
         #print('reg:%s - block%x' % (self.reg, self.inblock))
+        #FIXME: catch out of range register, write warning
+        if self.reg not in range(0,0x13):
+            self.put(self.ss, self.es, self.out_ann,
+                 [Ann.WARNING, ['Ignoring out-of-range register 0x%02X' % self.reg]])
+            return
         fn = getattr(self, 'handle_reg_0x%02x' % self.reg)
         fn(b, rw)
         # Honor address auto-increment feature of the DS3231. When the
