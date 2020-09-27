@@ -25,8 +25,8 @@ anb_DA, anb_RES, anb_SL, anb_CB, anb_DC, anb_PG, \
     anb_CO, anb_mux, anb_par, anb_LAST = range(10)
 
 bits = (
-    'Display Addressing', 'Reserved', 'Start Line', 'Continuation bit',
-    'Data / Command bit', 'Page', 'Column', 'mux', 'Parameter bit', 'Last Bit'
+    'Display Addressing', 'Reserved', 'Start Line', 'Continuation',
+    'Data / Command', 'Page', 'Column', 'mux', 'Parameter', 'Last'
 )
 
 (ann_LC, ann_HC, ann_DM, ann_SCA, ann_SPA, ann_SFB, ann_RHS, ann_LHS, ann_VRHS,
@@ -37,48 +37,48 @@ bits = (
     ann_LAST) = range(anb_LAST+1, anb_LAST+40)
 
 cmds2 = {
-    #       ann name              annID       cmd txt
-    0x00: ('LowerColStart',       ann_LC,     ['Set Lower Column Start Address', 'Set L Col Start', 'LC']),
-    0x10: ('HigherColStart',      ann_HC,     ['Set Higher Column Start Address', 'Set H Col Start', 'HC']),
-    0x20: ('DisplayMode',         ann_DM,     ['Set Display Mode', 'Set Dsp Md', 'DM']),
-    0x21: ('SetColAddress',       ann_SCA,    ['Set Column Address', 'Set Col Adr', 'CA']),
-    0x22: ('SetPageAddress',      ann_SPA,    ['Set Page Address', 'Set Pg Adr', 'PA']),
-    0x23: ('SetFadeoutBlinking',  ann_SFB,    ['Set Fade-out and Blinking', 'Set FO Blnk', 'FB']), 
-    0x26: ('RightHorScroll',      ann_RHS,    ['Right horizontal scroll', 'Right hor scr', 'RHS']), 
-    0x27: ('LeftHorScroll',       ann_LHS,    ['Left horizontal scroll', 'Left hor scr', 'LHS']), 
+    #       ann name              annID       cmd txt                                                       param?
+    0x00: ('LowerColStart',       ann_LC,     ['Set Lower Column Start Address', 'Set L Col Start', 'LC'],  0),
+    0x10: ('HigherColStart',      ann_HC,     ['Set Higher Column Start Address', 'Set H Col Start', 'HC'], 0),
+    0x20: ('DisplayMode',         ann_DM,     ['Set Display Mode', 'Set Dsp Md', 'DM'],                     1),
+    0x21: ('SetColAddress',       ann_SCA,    ['Set Column Address', 'Set Col Adr', 'CA'],                  1),
+    0x22: ('SetPageAddress',      ann_SPA,    ['Set Page Address', 'Set Pg Adr', 'PA'],                     1),
+    0x23: ('SetFadeoutBlinking',  ann_SFB,    ['Set Fade-out and Blinking', 'Set FO Blnk', 'FB'],           1), 
+    0x26: ('RightHorScroll',      ann_RHS,    ['Right horizontal scroll', 'Right hor scr', 'RHS'],          1), 
+    0x27: ('LeftHorScroll',       ann_LHS,    ['Left horizontal scroll', 'Left hor scr', 'LHS'],            1), 
     0x29: ('VertRightHorScroll',  ann_VRHS,   ['Vertical and right horizontal scroll', 
-                                               'Vert right hor scr', 'VRHS']), 
+                                               'Vert right hor scr', 'VRHS'],                               1), 
     0x2A: ('VertLeftHorScroll',   ann_VLHS,   ['Vertical and left horizontal scroll', 
-                                               'Vert left hor scr', 'VLHS']), 
-    0x2E: ('StopScrolling',       ann_SS,     ['Stop scrolling', 'Stsc']), 
-    0x2F: ('ActivateScrolling',   ann_AS,     ['Activate scrolling' , 'Acsc']), 
-    0x40: ('DisplayStartLine',    ann_DSL,    ['Display start line', 'DSL',]), 
-    0x81: ('SetContrast',         ann_SCC,     ['Set contrast control', 'Set Ctr', 'SC']),
-    0x8D: ('SetChargePump',       ann_SCPU,   ['Set charge pump', 'Set Ch pmp', 'SP']),
-    0xA0: ('MapCol0ToSeg0',       ann_MC0TS0, ['Map col addr0 to seg0', 'Map C0 to S0', 'M00']),
-    0xA1: ('MapCol127toSeg0',     ann_MCFFTS0,['Map col addr7f to seg0', 'Map C7f to S0', 'M7f0']),
-    0xA3: ('SetVertScrollArea',   ann_SVSA,   ['Set vertical scroll area', 'Set vert scr ar', 'SVSA']),    
-    0xA4: ('DisplayOnResume',     ann_DOR,    ['Display on, resume to RAM', 'Dis on, res RAM', 'D1R']),
-    0xA5: ('DisplayOnIgnore',     ann_DOI,    ['Display on, ignore RAM', 'Dis on, ign RAM', 'D1I']),
-    0xA6: ('NormalDisplay',       ann_ND,     ['Normal display', 'Norm disp', 'DN']),
-    0xA7: ('InverseDisplay',      ann_ID,     ['Inverse display', 'Inv disp', 'DI']),
-    0xA8: ('SetMultiplexRatio',   ann_SMR,    ['Set multiplex ratio', 'Set MUX rat', 'MUX']),
-    0xAE: ('DisplayOff',          ann_DOFF,   ['Display OFF', 'Dis OFF', 'DO']),
-    0xAF: ('DisplayOn',           ann_DON,    ['Display ON', 'Dis ON', 'D1']),
-    0xB0: ('PgStartAddr',         ann_PSA,    ['Page start address', 'Pg start', 'PS']),
-    0xC0: ('ComScanUp',           ann_CSU,    ['COM scan 0 to mux', 'C scan upw', 'SCU']),
-    0xC8: ('ComScanDown',         ann_CSD,    ['COM scan mux to 0', 'C scan dwd', 'SCD']),
-    0xD3: ('Set Vertical Offset', ann_SVO,    ['Set vertical offset', 'Set vert ofs', 'VO']),
-    0xD5: ('DisplayClockRatio',   ann_DCR,    ['Display clock ratio', 'Clock ratio', 'CR']),
-    0xD6: ('ZoomIn',              ann_ZI,     ['Set zoom-in', 'Zoom in', 'ZI']),
-    0xD9: ('PrechargePeriod',     ann_SPP,    ['Set precharge period', 'Pre chrg', 'PC']),
-    0xDA: ('SetCOMPins',          ann_SCPI,   ['Set COM pins', 'COM pins', 'CP']),
-    0xDB: ('SetVcomhDeselect',    ann_SVD,    ['Set Vcomh deselect', 'Vcomh desel', 'VD']),
-    0xE3: ('NOP',                 ann_NOP,    ['No operation', 'NOP']),
-    'data': ('GDDRAM',            ann_GR,     ['Data write',]),      # data write
-    'dev':  ('Device Address',    ann_DA,     ['Device address', ]), # 0x3C or 0x3D
-    'cbyte': ('Control Byte',     ann_CB,     ['Control byte',]),    # 0x80 (Command follows) or 0x40 (data)
-    'last':  ('Last Cmd',         ann_LAST,   ['Last', ])          # unused: marks end of cmds
+                                               'Vert left hor scr', 'VLHS'],                                1), 
+    0x2E: ('StopScrolling',       ann_SS,     ['Stop scrolling', 'Stsc'],                                   0), 
+    0x2F: ('ActivateScrolling',   ann_AS,     ['Activate scrolling' , 'Acsc'],                              0), 
+    0x40: ('DisplayStartLine',    ann_DSL,    ['Display start line', 'DSL',],                               0), 
+    0x81: ('SetContrast',         ann_SCC,     ['Set contrast control', 'Set Ctr', 'SC'],                   1),
+    0x8D: ('SetChargePump',       ann_SCPU,   ['Set charge pump', 'Set Ch pmp', 'SP'],                      1),
+    0xA0: ('MapCol0ToSeg0',       ann_MC0TS0, ['Map col addr0 to seg0', 'Map C0 to S0', 'M00'],             0),
+    0xA1: ('MapCol127toSeg0',     ann_MCFFTS0,['Map col addr7f to seg0', 'Map C7f to S0', 'M7f0'],          0),
+    0xA3: ('SetVertScrollArea',   ann_SVSA,   ['Set vertical scroll area', 'Set vert scr ar', 'SVSA'],      1),    
+    0xA4: ('DisplayOnResume',     ann_DOR,    ['Display on, resume to RAM', 'Dis on, res RAM', 'D1R'],      0),
+    0xA5: ('DisplayOnIgnore',     ann_DOI,    ['Display on, ignore RAM', 'Dis on, ign RAM', 'D1I'],         0),
+    0xA6: ('NormalDisplay',       ann_ND,     ['Normal display', 'Norm disp', 'DN'],                        0),
+    0xA7: ('InverseDisplay',      ann_ID,     ['Inverse display', 'Inv disp', 'DI'],                        0),
+    0xA8: ('SetMultiplexRatio',   ann_SMR,    ['Set multiplex ratio', 'Set MUX rat', 'MUX'],                1),
+    0xAE: ('DisplayOff',          ann_DOFF,   ['Display OFF', 'Dis OFF', 'DO'],                             0),
+    0xAF: ('DisplayOn',           ann_DON,    ['Display ON', 'Dis ON', 'D1'],                               0),
+    0xB0: ('PgStartAddr',         ann_PSA,    ['Page start address', 'Pg start', 'PS'],                     0),
+    0xC0: ('ComScanUp',           ann_CSU,    ['COM scan 0 to mux', 'C scan upw', 'SCU'],                   0),
+    0xC8: ('ComScanDown',         ann_CSD,    ['COM scan mux to 0', 'C scan dwd', 'SCD'],                   0),
+    0xD3: ('Set Vertical Offset', ann_SVO,    ['Set vertical offset', 'Set vert ofs', 'VO'],                1),
+    0xD5: ('DisplayClockRatio',   ann_DCR,    ['Display clock ratio', 'Clock ratio', 'CR'],                 1),
+    0xD6: ('ZoomIn',              ann_ZI,     ['Set zoom-in', 'Zoom in', 'ZI'],                             1),
+    0xD9: ('PrechargePeriod',     ann_SPP,    ['Set precharge period', 'Pre chrg', 'PC'],                   1),
+    0xDA: ('SetCOMPins',          ann_SCPI,   ['Set COM pins', 'COM pins', 'CP'],                           1),
+    0xDB: ('SetVcomhDeselect',    ann_SVD,    ['Set Vcomh deselect', 'Vcomh desel', 'VD'],                  1),
+    0xE3: ('NOP',                 ann_NOP,    ['No operation', 'NOP'],                                      0),
+    'data': ('GDDRAM',            ann_GR,     ['Data write',], 0),      # data write
+    'dev':  ('DeviceAddress',    ann_DA,     ['Device address',], 0), # 0x3C or 0x3D
+    'cbyte': ('ControlByte',     ann_CB,     ['Control byte',], 0),    # 0x80 (Command follows) or 0x40 (data)
+    'last':  ('LastCmd',         ann_LAST,   ['Last',], 0)          # unused: marks end of cmds
 }
 
 anbl_block=ann_LAST+1
@@ -87,9 +87,9 @@ anw_warn=anbl_block+1
 SSD1306_I2C_ADDRESS = 0x3C
 SSD1306_I2C_ADDRESS_2 = 0x3D
 
-def cmds_and_bits():
-    l = [('cmd_' + cmds2[k][0].lower(), cmds2[k][0] + ' command') for k in cmds2]
-    l += [('bit_' + re.sub('\\/| ', '-', b).lower(), b + ' bit') for b in bits]
+def bits_and_cmds():
+    l = [('bit_' + re.sub('\\/| ', '_', b).lower(), b + ' bit') for b in bits]
+    l += [('cmd_' + cmds2[k][0].lower(), cmds2[k][0] + ' command') for k in cmds2]
     return tuple(l)
 
 class Decoder(srd.Decoder):
@@ -102,9 +102,8 @@ class Decoder(srd.Decoder):
     inputs = ['i2c']
     outputs = []
     tags = ['Display', 'IC']
-    annotations =  cmds_and_bits() + (
-        ('write-command', 'Write command'),
-        ('write-data', 'Write GDDRAM data'),
+    annotations =  bits_and_cmds() + (
+        ('write_block', 'Write block'),
         ('warning', 'Warning'),
     )
     annotation_rows = (
@@ -242,7 +241,7 @@ class Decoder(srd.Decoder):
         self.putr(7)
         self.putr(6)
         self.putd(5, 4, [anb_par, [bf2, 'BF']])
-        self.putd(3, 0, [anb_par, [fo, 'FS']])
+        self.putd(3, 0, [anb_par, ['fr: %d' % fo, 'FS']])
         #cmd output:
         self.putd(7, 0, [cmds2[self.prevreg][1], ['%s (%d frames)' % (bf, fo),
         '%s (%d fr)' % (bf2, fo), 'BF']])
@@ -250,53 +249,121 @@ class Decoder(srd.Decoder):
         self.blockstring += ': %s, %d frames' % (bf, fo)
         self.substate = 'COMMAND'
 
-    def handle_par_0x26(self, param): # A B C D E F- set scrolling
+    def handle_par_0x26(self, param): # set right hor. scrolling
         if self.substate == 'PARAMETER':
-            #A - fixed: 0x00
+            for i in range(8):
+                self.put0(i)
             self.substate = 'PARAMETER2'
         elif self.substate == 'PARAMETER2':
+            for i in range(3, 8):
+                self.putr(i)
             #B[2:0] start page
+            sp = param & 0x7
+            self.putd(2, 0, [anb_PG, ['page %d' % sp, 'PG']])
+            #cmd output:
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['Start Page: %d' % sp, 'St Pg: %d' % sp, 'SP']])
+            #block output:
+            self.blockstring += ' from page %d, ' % sp
             self.substate = 'PARAMETER3'
         elif self.substate == 'PARAMETER3':
+            for i in range(3, 8):
+                self.putr(i)
             #C[2:0] time interval
+            iv = (5, 64, 128, 256, 3, 4, 25, 2)[param & 0x7]
+            self.putd(2, 0, [anb_PG, ['intvl %d' % iv, 'IV']])
+            #cmd output:
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['Scroll Interval: %d' % iv, 'Scr Iv: %d' % iv, 'IV']])
+            #block output
+            self.blockstring += 'time interval %d, ' % iv
             self.substate = 'PARAMETER4'
         elif self.substate == 'PARAMETER4':
+            for i in range(3, 8):
+                self.putr(i)
             #D[2:0] end page
+            ep = param & 0x7
+            self.putd(2, 0, [anb_PG, ['page %d' % ep, 'PG']])
+            #cmd output:
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['End Page: %d' % ep, 'End Pg: %d' % ep, 'EP']])
+            #block output
+            self.blockstring += 'to page %d' % ep
             self.substate = 'PARAMETER5'
         elif self.substate == 'PARAMETER5':
-            #E - fixed: 0x00
+            for i in range(8):
+                self.put0(i)
             self.substate = 'PARAMETER6'
         elif self.substate == 'PARAMETER6':
-            #F - fixed: 0xFF
+            for i in range(8):
+                self.put1(i)
             self.substate = 'COMMAND'
 
-#FIXME: 0x27 identical to 0x26
+    def handle_par_0x27(self, param): # set left hor. scrolling
+        self.handle_par_0x26(param)
 
-    def handle_par_0x29(self, param): # A B C D E F- set scrolling
+    def handle_par_0x29(self, param): # set vert and right hor scrolling
         if self.substate == 'PARAMETER':
-            #A - fixed: 0x00
+            for i in range(8):
+                self.put0(i)
             self.substate = 'PARAMETER2'
         elif self.substate == 'PARAMETER2':
+            for i in range(3, 8):
+                self.putr(i)
             #B[2:0] start page
+            sp = param & 0x7
+            self.putd(2, 0, [anb_PG, ['page %d' % sp, 'PG']])
+            #cmd output:
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['Start Page: %d' % sp, 'St Pg: %d' % sp, 'SP']])
+            #block output:
+            self.blockstring += ' from page %d, ' % sp
             self.substate = 'PARAMETER3'
         elif self.substate == 'PARAMETER3':
+            for i in range(3, 8):
+                self.putr(i)
             #C[2:0] time interval
+            iv = (5, 64, 128, 256, 3, 4, 25, 2)[param & 0x7]
+            self.putd(2, 0, [anb_PG, ['intvl %d' % iv, 'IV']])
+            #cmd output:
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['Scroll Interval: %d' % iv, 'Scr Iv: %d' % iv, 'IV']])
+            #block output
+            self.blockstring += 'time interval %d, ' % iv
             self.substate = 'PARAMETER4'
         elif self.substate == 'PARAMETER4':
+            for i in range(3, 8):
+                self.putr(i)
             #D[2:0] end page
+            ep = param & 0x7
+            self.putd(2, 0, [anb_PG, ['page %d' % ep, 'PG']])
+            #cmd output:
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['End Page: %d' % ep, 'End Pg: %d' % ep, 'EP']])
+            #block output
+            self.blockstring += 'to page %d' % ep
             self.substate = 'PARAMETER5'
         elif self.substate == 'PARAMETER5':
-            #E[5:0] - vertical offset
+            for i in (6, 7):
+                self.putr(i)
+            #E[5:0] - vertical scrolling offset
+            vso = param & 0x3f
+            self.putd(2, 0, [anb_PG, ['scr ofs %d' % vso, 'VO']])
+            #cmd output:
+            self.putd(7, 0, [cmds2[self.prevreg][1], 
+                ['Vert Scroll Ofs: %d' % vso, 'VSO: %d' % vso, 'VSO']])
+            #block output
+            self.blockstring += ' (vertical offset= %d rows)' % vso
             self.substate = 'COMMAND'
 
-#FIXME: 0x2A identical to 0x29
+    def handle_par_0x2a(self, param): # set vert and left hor scrolling
+        self.handle_par_0x29(param)
 
     def handle_par_0x40(self, param): # display start line
         #bit output:
         self.put0(7)
         self.put1(6)
-        self.putd(5, 0, [cmds2[self.prevreg][1], 
-            ['Start line= %d' % (param & 0x3f),
+        self.putd(5, 0, [anb_SL, ['Start line= %d' % (param & 0x3f),
              'st l %d' % (param & 0x3f), 'StL']])
         #cmd output: none
         #block output
@@ -510,11 +577,9 @@ class Decoder(srd.Decoder):
                 self.blockstring = cmds2[b][2][0]
                 self.sscmd = self.ss_block
                 self.prevreg = b
-                #FIXME: remove special cases: take parameter info from cmds2
-                if b in (0x20, 0x21, 0x22, 0x26, 0x27, 0x29, 0x2a, 0x81, 0x8d, 
-                        0xa8, 0xd3, 0xd5, 0xd9, 0xda, 0xdb):
+                #cmds w/ parameters
+                if cmds2[b][3]:
                     self.substate='PARAMETER'
-                    #self.prevreg = b
                 if b in (0x0, 0x10, 0x40, 0xB0):
                     #handlers for 0x0 - 0xF, 0x10-0x1F, 0x40-0x7F, 0xB0-0xB7
                     fn = getattr(self, 'handle_par_0x%02x' % b)
