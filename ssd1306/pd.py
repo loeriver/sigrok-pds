@@ -89,7 +89,9 @@ SSD1306_I2C_ADDRESS_2 = 0x3D
 
 def bits_and_cmds():
     l = [('bit_' + re.sub('\\/| ', '_', b).lower(), b + ' bit') for b in bits]
-    l += [('cmd_' + cmds2[k][0].lower(), cmds2[k][0] + ' command') for k in cmds2]
+    #order dictionary entries by ann_
+    sl=sorted(cmds2.items(), key=lambda x: x[1][1])
+    l += [('cmd_' + k[1][0].lower(), k[1][0] + ' command') for k in sl]
     return tuple(l)
 
 class Decoder(srd.Decoder):
