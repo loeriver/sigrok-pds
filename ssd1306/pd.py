@@ -646,8 +646,8 @@ class Decoder(srd.Decoder):
             if not self.is_correct_chip(databyte):
                 self.state = 'IDLE'
                 return
-            self.state = 'WRITE CONTROL_BYTE'
-        elif self.state == 'WRITE CONTROL_BYTE':
+            self.state = 'WRITE CONTROL BYTE'
+        elif self.state == 'WRITE CONTROL BYTE':
             # Get control byte.
             if cmd == 'DATA WRITE':
                 self.handle_controlbyte(databyte)
@@ -666,7 +666,7 @@ class Decoder(srd.Decoder):
                     self.handle_command(databyte)
                 else: #substate 'PARAMETER' (2, ...)
                     self.handle_command(self.prevreg, databyte)    
-                self.state='WRITE CONTROL_BYTE'    
+                self.state='WRITE CONTROL BYTE'    
         elif self.state == 'SSD DATA':
             # Get data bytes until a STOP condition occurs.
             if cmd == 'DATA WRITE':
